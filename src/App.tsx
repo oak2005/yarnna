@@ -11,6 +11,7 @@ import { ChatView } from './components/ChatView';
 import { DiscoverView } from './components/DiscoverView';
 import { ProfileView } from './components/ProfileView';
 import { AdminPortalView } from './components/AdminPortalView';
+import { NotificationsView } from './components/NotificationsView';
 import { TestnetNoticeModal } from './components/TestnetNoticeModal';
 import { ReportModal } from './components/ReportModal';
 import { AuthModal } from './components/AuthModal';
@@ -19,10 +20,12 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'chats' | 'profile' | 'admin'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'notifications' | 'chats' | 'profile' | 'admin'>('feed');
   const [feedType, setFeedType] = useState<'chronological' | 'recommended'>('chronological');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+  const [realtimeToast, setRealtimeToast] = useState<{ id: string; title: string; subtitle: string } | null>(null);
   
   // Theme Mode: light | dark | system
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
@@ -93,9 +96,50 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  // Real-Time Notification Stream and Adaptive Background Polling
+  useEffect(() => {
+    if (!currentUser) {
+      setUnreadNotifCount(0);
+      return;
+    }
+
+    // 1. Initial count fetch
+    api.getUnreadNotificationCount()
+      .then((res) => setUnreadNotifCount(res.unread_count))
+      .catch(() => {});
+
+    // 2. Real-time Server-Sent Events subscriber
+    const unsubscribe = api.subscribeNotificationsStream((notif) => {
+      setUnreadNotifCount((prev) => prev + 1);
+      const actorName = notif.actor?.display_name || 'Someone';
+      const headline = notif.content_summary || 'sent you an update';
+      setRealtimeToast({
+        id: notif.id,
+        title: actorName,
+        subtitle: headline,
+      });
+      setTimeout(() => {
+        setRealtimeToast((curr) => (curr?.id === notif.id ? null : curr));
+      }, 4500);
+    });
+
+    // 3. Periodic adaptive background polling (every 6 seconds) for dual runtime resilience
+    const pollInterval = setInterval(() => {
+      api.getUnreadNotificationCount()
+        .then((res) => setUnreadNotifCount(res.unread_count))
+        .catch(() => {});
+    }, 6000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(pollInterval);
+    };
+  }, [currentUser]);
+
   const handleLogout = () => {
     removeAuthToken();
     setCurrentUser(null);
+    setUnreadNotifCount(0);
     setActiveTab('feed');
   };
 
@@ -153,6 +197,22 @@ export const App: React.FC = () => {
           >
             <Compass size={22} />
             <span>Discover</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (!currentUser) setShowAuthModal(true);
+              else { setActiveTab('notifications'); setViewingUsername(null); }
+            }}
+            className={`nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
+          >
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              <Bell size={22} />
+              {unreadNotifCount > 0 && (
+                <span className="notif-badge">{unreadNotifCount > 99 ? '99+' : unreadNotifCount}</span>
+              )}
+            </div>
+            <span>Notifications</span>
           </button>
 
           <button
@@ -258,6 +318,7 @@ export const App: React.FC = () => {
             <h1 className="page-heading">
               {activeTab === 'feed' && 'Yarnna Feed'}
               {activeTab === 'discover' && 'Discover'}
+              {activeTab === 'notifications' && 'Notifications Feed'}
               {activeTab === 'chats' && 'Chats & Voice Notes'}
               {activeTab === 'profile' && 'Profile'}
               {activeTab === 'admin' && 'Admin Portal'}
@@ -265,6 +326,37 @@ export const App: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Quick Notifications Button */}
+            {currentUser && (
+              <button
+                onClick={() => { setActiveTab('notifications'); setViewingUsername(null); }}
+                title="Open Notifications Feed"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: activeTab === 'notifications' ? 'var(--primary)' : 'var(--bg-input)',
+                  color: activeTab === 'notifications' ? 'white' : 'var(--text-main)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <Bell size={14} />
+                  {unreadNotifCount > 0 && (
+                    <span className="notif-badge-mobile" style={{ top: '-8px', right: '-8px' }}>
+                      {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+                    </span>
+                  )}
+                </div>
+                <span>Alerts</span>
+              </button>
+            )}
+
             {/* Admin Portal Shortcut if privileged */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') && (
               <button
@@ -548,6 +640,20 @@ export const App: React.FC = () => {
           />
         )}
 
+        {activeTab === 'notifications' && (
+          <NotificationsView
+            currentUser={currentUser}
+            onViewProfile={handleViewProfile}
+            onNavigateToChat={(_convId) => {
+              setActiveTab('chats');
+            }}
+            onNavigateToPost={(_postId) => {
+              setActiveTab('feed');
+            }}
+            onUnreadCountChange={(cnt) => setUnreadNotifCount(cnt)}
+          />
+        )}
+
         {activeTab === 'chats' && (
           <ChatView
             currentUser={currentUser}
@@ -655,6 +761,24 @@ export const App: React.FC = () => {
         <button
           onClick={() => {
             if (!currentUser) setShowAuthModal(true);
+            else { setActiveTab('notifications'); setViewingUsername(null); }
+          }}
+          className={`mobile-nav-btn ${activeTab === 'notifications' ? 'active' : ''}`}
+        >
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
+            <Bell size={22} />
+            {unreadNotifCount > 0 && (
+              <span className="notif-badge-mobile">
+                {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
+              </span>
+            )}
+          </div>
+          <span>Alerts</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (!currentUser) setShowAuthModal(true);
             else { setActiveTab('chats'); setViewingUsername(null); }
           }}
           className={`mobile-nav-btn ${activeTab === 'chats' ? 'active' : ''}`}
@@ -688,6 +812,40 @@ export const App: React.FC = () => {
           </button>
         )}
       </nav>
+
+      {/* Real-time Toast Banner */}
+      {realtimeToast && (
+        <div
+          className="realtime-toast"
+          onClick={() => {
+            setActiveTab('notifications');
+            setViewingUsername(null);
+            setRealtimeToast(null);
+          }}
+        >
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--primary-subtle)',
+            color: 'var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Bell size={18} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: '700', fontSize: '0.88rem', color: 'var(--text-main)' }}>
+              {realtimeToast.title}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {realtimeToast.subtitle}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <TestnetNoticeModal

@@ -107,7 +107,7 @@ export interface Notification {
   id: string;
   recipient_id: string;
   actor_id: string;
-  type: 'like' | 'reply' | 'repost' | 'follow' | 'message' | 'system';
+  type: 'like' | 'reply' | 'repost' | 'follow' | 'message' | 'system' | 'mention';
   target_id: string | null;
   content_summary: string;
   is_read: boolean;

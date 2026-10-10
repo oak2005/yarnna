@@ -611,6 +611,82 @@ async function runTestSuite() {
     assert(!!res.data.appeal_id, 'Appeal ID generated');
   });
 
+  // 6. NOTIFICATION FEED & REAL-TIME STREAM
+  console.log('\n--- 6. NOTIFICATION FEED & REAL-TIME STREAM TESTING ---');
+
+  let testNotifId = '';
+  await test('Functional: Notifications', 'Chioma likes Tunde post and generates real-time notification', async () => {
+    // Other user likes created post
+    const likeRes = await request(`/posts/${createdPostId}/like`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${otherUserToken}` },
+    });
+    assert(likeRes.status === 200, `Expected 200, got ${likeRes.status}`);
+
+    // Fetch Tunde notifications
+    const notifsRes = await request('/users/notifications/list', {
+      headers: { Authorization: `Bearer ${testUserToken}` },
+    });
+    assert(notifsRes.status === 200, `Expected 200, got ${notifsRes.status}`);
+    assert(Array.isArray(notifsRes.data.notifications), 'Notifications is an array');
+    assert(typeof notifsRes.data.unread_count === 'number', 'Unread count is returned');
+
+    const likeNotif = notifsRes.data.notifications.find((n: any) => n.type === 'like' && n.target_id === createdPostId);
+    assert(!!likeNotif, 'Like notification was generated for author');
+    assert(likeNotif.actor?.username === 'chioma_dev', 'Actor metadata is populated');
+    testNotifId = likeNotif.id;
+  });
+
+  await test('Functional: Notifications', 'Filter notifications by type tab (likes)', async () => {
+    const filterRes = await request('/users/notifications/list?filter=likes', {
+      headers: { Authorization: `Bearer ${testUserToken}` },
+    });
+    assert(filterRes.status === 200, `Expected 200, got ${filterRes.status}`);
+    assert(filterRes.data.notifications.every((n: any) => n.type === 'like'), 'All items match filter tab');
+  });
+
+  await test('Functional: Notifications', 'Mark single notification as read', async () => {
+    assert(!!testNotifId, 'Test notification ID exists');
+    const readRes = await request('/users/notifications/read', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${testUserToken}` },
+      body: JSON.stringify({ id: testNotifId }),
+    });
+    assert(readRes.status === 200, `Expected 200, got ${readRes.status}`);
+    assert(readRes.data.success === true, 'Success flag returned');
+  });
+
+  await test('Functional: Notifications', 'Mark all notifications as read', async () => {
+    const readAllRes = await request('/users/notifications/read', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${testUserToken}` },
+      body: JSON.stringify({}),
+    });
+    assert(readAllRes.status === 200, `Expected 200, got ${readAllRes.status}`);
+    assert(readAllRes.data.unread_count === 0, 'Unread count is now 0');
+  });
+
+  await test('Functional: Notifications', 'Delete single notification item', async () => {
+    assert(!!testNotifId, 'Test notification ID exists');
+    const delRes = await request(`/users/notifications/${testNotifId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${testUserToken}` },
+    });
+    assert(delRes.status === 200, `Expected 200, got ${delRes.status}`);
+    assert(delRes.data.success === true, 'Deleted successfully');
+  });
+
+  await test('Functional: Notifications', 'Real-time SSE stream endpoint validates token and connects', async () => {
+    const streamRes = await fetch(`${BASE_URL}/users/notifications/stream?token=${testUserToken}`);
+    assert(streamRes.status === 200, `Expected 200, got ${streamRes.status}`);
+    assert(streamRes.headers.get('content-type')?.includes('text/event-stream') || false, 'Content-Type is text/event-stream');
+    // Close stream reader
+    const reader = streamRes.body?.getReader();
+    if (reader) {
+      await reader.cancel();
+    }
+  });
+
   // Teardown
   server.close();
 

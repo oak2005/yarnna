@@ -20,6 +20,17 @@ export function generateToken(user: User): string {
   );
 }
 
+export function verifyUserToken(token: string): User | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string; role: string };
+    const user = db.data.users.find(u => u.id === decoded.id);
+    if (!user || user.status === 'banned') return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

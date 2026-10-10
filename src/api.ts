@@ -1,3 +1,5 @@
+import { NotificationItem } from './types';
+
 const API_BASE = '/api';
 
 export function getAuthToken(): string | null {
@@ -84,8 +86,71 @@ export const api = {
   toggleFollow: (userId: string) => request<any>(`/users/${userId}/follow`, { method: 'POST' }),
   toggleBlock: (userId: string) => request<any>(`/users/${userId}/block`, { method: 'POST' }),
   search: (q: string) => request<any>(`/users/search?q=${encodeURIComponent(q)}`),
-  getNotifications: () => request<any>('/users/notifications/list'),
-  markNotificationsRead: () => request<any>('/users/notifications/read', { method: 'POST' }),
+  getNotifications: (filter: string = 'all') =>
+    request<{ notifications: NotificationItem[]; unread_count: number }>(`/users/notifications/list?filter=${encodeURIComponent(filter)}`),
+  getUnreadNotificationCount: () =>
+    request<{ unread_count: number }>('/users/notifications/unread-count'),
+  markNotificationsRead: (id?: string) =>
+    request<{ success: boolean; unread_count: number }>('/users/notifications/read', {
+      method: 'POST',
+      body: JSON.stringify({ id }),
+    }),
+  deleteNotification: (id: string) =>
+    request<{ success: boolean; unread_count: number }>(`/users/notifications/${id}`, { method: 'DELETE' }),
+  clearAllNotifications: () =>
+    request<{ success: boolean; unread_count: number }>('/users/notifications/clear-all', { method: 'POST' }),
+  subscribeNotificationsStream: (onNotification: (notif: NotificationItem) => void): (() => void) => {
+    const token = getAuthToken();
+    if (!token) return () => {};
+
+    let eventSource: EventSource | null = null;
+    let isClosed = false;
+    let reconnectTimeout: any = null;
+
+    const connect = () => {
+      if (isClosed) return;
+      try {
+        const streamUrl = `${API_BASE}/users/notifications/stream?token=${encodeURIComponent(token)}`;
+        eventSource = new EventSource(streamUrl);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data && data.id) {
+              onNotification(data);
+            }
+          } catch {
+            // Heartbeat or comment ping
+          }
+        };
+
+        eventSource.onerror = () => {
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+          if (!isClosed) {
+            reconnectTimeout = setTimeout(connect, 4000);
+          }
+        };
+      } catch {
+        if (!isClosed) {
+          reconnectTimeout = setTimeout(connect, 4000);
+        }
+      }
+    };
+
+    connect();
+
+    return () => {
+      isClosed = true;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+    };
+  },
 
   // Translation
   translate: (text: string, source_lang: string = 'pcm', target_lang: string = 'en') =>

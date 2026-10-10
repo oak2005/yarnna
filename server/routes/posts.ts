@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db, Post, Like, Repost, Bookmark } from '../db.js';
 import { requireAuth, AuthRequest, rateLimit } from '../auth.js';
+import { emitNotification } from '../events.js';
 
 const router = Router();
 
@@ -187,21 +188,70 @@ router.post('/', requireAuth, rateLimit(15, 60000), (req: AuthRequest, res: Resp
   db.data.posts.unshift(newPost);
 
   // If this is a reply, update parent post replies count and notify parent author
+  let parentAuthorId: string | null = null;
   if (reply_to_post_id) {
     const parentPost = db.data.posts.find(p => p.id === reply_to_post_id);
     if (parentPost) {
       parentPost.replies_count += 1;
+      parentAuthorId = parentPost.author_id;
       if (parentPost.author_id !== user.id) {
-        db.data.notifications.unshift({
-          id: `notif_${Date.now()}`,
+        const replyNotif = {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
           recipient_id: parentPost.author_id,
           actor_id: user.id,
-          type: 'reply',
+          type: 'reply' as const,
           target_id: newPost.id,
           content_summary: 'replied to your yarn',
           is_read: false,
           created_at: now,
+        };
+        db.data.notifications.unshift(replyNotif);
+        emitNotification({
+          ...replyNotif,
+          actor: {
+            id: user.id,
+            username: user.username,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url,
+          },
         });
+      }
+    }
+  }
+
+  // Detect and notify @mentioned users
+  if (newPost.content) {
+    const mentionMatches = newPost.content.match(/@([a-zA-Z0-9_]{3,30})/g);
+    if (mentionMatches) {
+      const seenHandles = new Set<string>();
+      for (const m of mentionMatches) {
+        const handle = m.substring(1).toLowerCase();
+        if (seenHandles.has(handle)) continue;
+        seenHandles.add(handle);
+
+        const mentionedUser = db.data.users.find(u => u.username.toLowerCase() === handle && u.status !== 'banned');
+        if (mentionedUser && mentionedUser.id !== user.id && mentionedUser.id !== parentAuthorId) {
+          const mentionNotif = {
+            id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            recipient_id: mentionedUser.id,
+            actor_id: user.id,
+            type: 'mention' as const,
+            target_id: newPost.id,
+            content_summary: 'mentioned you in a yarn',
+            is_read: false,
+            created_at: now,
+          };
+          db.data.notifications.unshift(mentionNotif);
+          emitNotification({
+            ...mentionNotif,
+            actor: {
+              id: user.id,
+              username: user.username,
+              display_name: user.display_name,
+              avatar_url: user.avatar_url,
+            },
+          });
+        }
       }
     }
   }
@@ -300,15 +350,25 @@ router.post('/:id/like', requireAuth, (req: AuthRequest, res: Response) => {
 
     // Send notification to author if not self
     if (post.author_id !== user.id) {
-      db.data.notifications.unshift({
-        id: `notif_${Date.now()}`,
+      const likeNotif = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         recipient_id: post.author_id,
         actor_id: user.id,
-        type: 'like',
+        type: 'like' as const,
         target_id: post.id,
         content_summary: 'liked your yarn',
         is_read: false,
         created_at: new Date().toISOString(),
+      };
+      db.data.notifications.unshift(likeNotif);
+      emitNotification({
+        ...likeNotif,
+        actor: {
+          id: user.id,
+          username: user.username,
+          display_name: user.display_name,
+          avatar_url: user.avatar_url,
+        },
       });
     }
   }
@@ -370,15 +430,25 @@ router.post('/:id/repost', requireAuth, (req: AuthRequest, res: Response) => {
     });
 
     if (targetPost.author_id !== user.id) {
-      db.data.notifications.unshift({
-        id: `notif_${Date.now()}`,
+      const repostNotif = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         recipient_id: targetPost.author_id,
         actor_id: user.id,
-        type: 'repost',
+        type: 'repost' as const,
         target_id: targetPost.id,
         content_summary: 'reposted your yarn',
         is_read: false,
         created_at: now,
+      };
+      db.data.notifications.unshift(repostNotif);
+      emitNotification({
+        ...repostNotif,
+        actor: {
+          id: user.id,
+          username: user.username,
+          display_name: user.display_name,
+          avatar_url: user.avatar_url,
+        },
       });
     }
   }

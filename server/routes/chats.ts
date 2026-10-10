@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db, Conversation, ConversationParticipant, Message } from '../db.js';
 import { requireAuth, AuthRequest, rateLimit } from '../auth.js';
+import { emitNotification } from '../events.js';
 
 const router = Router();
 
@@ -308,9 +309,42 @@ router.post('/:id/messages', requireAuth, rateLimit(30, 60000), (req: AuthReques
     senderPart.last_read_message_id = newMsg.id;
   }
 
+  // Notify other participants
+  const sender = db.data.users.find(u => u.id === currentUserId);
+  const otherParticipants = db.data.conversation_participants.filter(
+    cp => cp.conversation_id === conversationId && cp.user_id !== currentUserId && !cp.is_muted
+  );
+  const summaryText = message_type === 'voice_note'
+    ? 'sent you a voice note'
+    : message_type === 'photo'
+    ? 'sent you a photo'
+    : 'sent you a message';
+
+  for (const part of otherParticipants) {
+    const msgNotif = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      recipient_id: part.user_id,
+      actor_id: currentUserId,
+      type: 'message' as const,
+      target_id: conversationId,
+      content_summary: summaryText,
+      is_read: false,
+      created_at: now,
+    };
+    db.data.notifications.unshift(msgNotif);
+    emitNotification({
+      ...msgNotif,
+      actor: sender ? {
+        id: sender.id,
+        username: sender.username,
+        display_name: sender.display_name,
+        avatar_url: sender.avatar_url,
+      } : null,
+    });
+  }
+
   db.save();
 
-  const sender = db.data.users.find(u => u.id === currentUserId);
   res.status(201).json({
     message: {
       ...newMsg,

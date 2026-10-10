@@ -1,7 +1,8 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import { db, User } from '../db.js';
-import { requireAuth, AuthRequest, generateToken } from '../auth.js';
+import { requireAuth, AuthRequest, generateToken, verifyUserToken } from '../auth.js';
 import { formatPost } from './posts.js';
+import { notificationEmitter, emitNotification } from '../events.js';
 
 const router = Router();
 
@@ -160,15 +161,27 @@ router.post('/:id/follow', requireAuth, (req: AuthRequest, res: Response) => {
     isFollowing = true;
 
     // Send notification
-    db.data.notifications.unshift({
-      id: `notif_${Date.now()}`,
+    const newNotif = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       recipient_id: targetId,
       actor_id: currentUserId,
-      type: 'follow',
+      type: 'follow' as const,
       target_id: currentUserId,
       content_summary: 'started following your yarn',
       is_read: false,
       created_at: new Date().toISOString(),
+    };
+    db.data.notifications.unshift(newNotif);
+
+    const actor = db.data.users.find(u => u.id === currentUserId);
+    emitNotification({
+      ...newNotif,
+      actor: actor ? {
+        id: actor.id,
+        username: actor.username,
+        display_name: actor.display_name,
+        avatar_url: actor.avatar_url,
+      } : null,
     });
   }
 
@@ -211,15 +224,47 @@ router.post('/:id/block', requireAuth, (req: AuthRequest, res: Response) => {
   res.json({ is_blocked: isBlocked });
 });
 
-// GET /api/users/notifications - User notifications
+// GET /api/users/notifications/unread-count - Unread notifications count
+router.get('/notifications/unread-count', requireAuth, (req: AuthRequest, res: Response) => {
+  const currentUserId = req.user!.id;
+  const unreadCount = db.data.notifications.filter(n => n.recipient_id === currentUserId && !n.is_read).length;
+  res.json({ unread_count: unreadCount });
+});
+
+// GET /api/users/notifications/list - User notifications with filtering
 router.get('/notifications/list', requireAuth, (req: AuthRequest, res: Response) => {
   const currentUserId = req.user!.id;
+  const filter = (req.query.filter as string || 'all').toLowerCase().trim();
 
-  const notifs = db.data.notifications
-    .filter(n => n.recipient_id === currentUserId)
+  let filtered = db.data.notifications.filter(n => n.recipient_id === currentUserId);
+
+  if (filter === 'mentions') {
+    filtered = filtered.filter(n => n.type === 'mention');
+  } else if (filter === 'likes') {
+    filtered = filtered.filter(n => n.type === 'like');
+  } else if (filter === 'replies') {
+    filtered = filtered.filter(n => n.type === 'reply');
+  } else if (filter === 'follows') {
+    filtered = filtered.filter(n => n.type === 'follow');
+  } else if (filter === 'messages') {
+    filtered = filtered.filter(n => n.type === 'message');
+  }
+
+  const unreadCount = db.data.notifications.filter(n => n.recipient_id === currentUserId && !n.is_read).length;
+
+  const notifs = filtered
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .map(n => {
       const actor = db.data.users.find(u => u.id === n.actor_id);
+      let targetPreview: string | null = null;
+      if (n.target_id) {
+        if (n.type === 'like' || n.type === 'reply' || n.type === 'repost' || n.type === 'mention') {
+          const post = db.data.posts.find(p => p.id === n.target_id);
+          if (post && post.content) {
+            targetPreview = post.content.slice(0, 90);
+          }
+        }
+      }
       return {
         ...n,
         actor: actor ? {
@@ -228,22 +273,110 @@ router.get('/notifications/list', requireAuth, (req: AuthRequest, res: Response)
           display_name: actor.display_name,
           avatar_url: actor.avatar_url,
         } : null,
+        target_preview: targetPreview,
       };
     });
 
-  res.json({ notifications: notifs });
+  res.json({ notifications: notifs, unread_count: unreadCount });
 });
 
-// POST /api/users/notifications/read - Mark all notifications as read
+// POST /api/users/notifications/read - Mark notifications as read (single or all)
 router.post('/notifications/read', requireAuth, (req: AuthRequest, res: Response) => {
   const currentUserId = req.user!.id;
-  for (const n of db.data.notifications) {
-    if (n.recipient_id === currentUserId) {
-      n.is_read = true;
+  const { id } = req.body || {};
+
+  if (id && typeof id === 'string') {
+    const target = db.data.notifications.find(n => n.id === id && n.recipient_id === currentUserId);
+    if (target) {
+      target.is_read = true;
+    }
+  } else {
+    for (const n of db.data.notifications) {
+      if (n.recipient_id === currentUserId) {
+        n.is_read = true;
+      }
     }
   }
   db.save();
-  res.json({ success: true });
+  const unreadCount = db.data.notifications.filter(n => n.recipient_id === currentUserId && !n.is_read).length;
+  res.json({ success: true, unread_count: unreadCount });
+});
+
+// DELETE /api/users/notifications/:id - Delete a single notification
+router.delete('/notifications/:id', requireAuth, (req: AuthRequest, res: Response) => {
+  const currentUserId = req.user!.id;
+  const targetId = req.params.id;
+  const idx = db.data.notifications.findIndex(n => n.id === targetId && n.recipient_id === currentUserId);
+  if (idx !== -1) {
+    db.data.notifications.splice(idx, 1);
+    db.save();
+  }
+  const unreadCount = db.data.notifications.filter(n => n.recipient_id === currentUserId && !n.is_read).length;
+  res.json({ success: true, unread_count: unreadCount });
+});
+
+// POST /api/users/notifications/clear-all - Clear all notifications for user
+router.post('/notifications/clear-all', requireAuth, (req: AuthRequest, res: Response) => {
+  const currentUserId = req.user!.id;
+  db.data.notifications = db.data.notifications.filter(n => n.recipient_id !== currentUserId);
+  db.save();
+  res.json({ success: true, unread_count: 0 });
+});
+
+// GET /api/users/notifications/stream - Server-Sent Events stream for real-time notifications
+router.get('/notifications/stream', (req: Request, res: Response) => {
+  let token = req.query.token as string;
+  if (!token && req.headers.authorization) {
+    token = req.headers.authorization.replace('Bearer ', '');
+  }
+
+  if (!token) {
+    res.status(401).json({ error: 'Authentication token required for real-time notifications.' });
+    return;
+  }
+
+  const user = verifyUserToken(token);
+  if (!user) {
+    res.status(401).json({ error: 'Invalid or expired session token.' });
+    return;
+  }
+
+  // Set SSE Headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'Access-Control-Allow-Origin': '*',
+  });
+
+  res.write(': connected\n\n');
+
+  const onNotification = (notif: any) => {
+    if (notif && notif.recipient_id === user.id) {
+      try {
+        res.write(`data: ${JSON.stringify(notif)}\n\n`);
+      } catch (err) {
+        console.error('[SSE] Failed to write notification event:', err);
+      }
+    }
+  };
+
+  notificationEmitter.on('notification', onNotification);
+
+  // Heartbeat every 20 seconds
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(': heartbeat\n\n');
+    } catch {
+      clearInterval(heartbeat);
+    }
+  }, 20000);
+
+  req.on('close', () => {
+    notificationEmitter.off('notification', onNotification);
+    clearInterval(heartbeat);
+  });
 });
 
 function getUserIdFromHeader(authHeader: string): string | undefined {
