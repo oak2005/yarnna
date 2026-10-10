@@ -280,4 +280,35 @@ router.get('/audit-logs', requireAdmin, (req: AuthRequest, res: Response) => {
   res.json({ audit_logs: logs });
 });
 
+// GET /api/admin/settings - View system settings
+router.get('/settings', requireAdmin, (_req: AuthRequest, res: Response) => {
+  res.json({ settings: db.data.system_settings || { restrict_yarnna_handles: true } });
+});
+
+// POST /api/admin/settings - Update system settings (e.g. lift or enforce handle reservation)
+router.post('/settings', requireAdmin, (req: AuthRequest, res: Response) => {
+  const { restrict_yarnna_handles, reason } = req.body;
+  if (typeof restrict_yarnna_handles !== 'boolean') {
+    res.status(400).json({ error: 'Field restrict_yarnna_handles must be boolean.' });
+    return;
+  }
+
+  db.data.system_settings = {
+    ...db.data.system_settings,
+    restrict_yarnna_handles,
+  };
+  db.save();
+
+  logAdminAction(
+    req.user!.id,
+    'UPDATE_SYSTEM_SETTINGS',
+    'system_settings',
+    'restrict_yarnna_handles',
+    reason?.trim() || (restrict_yarnna_handles ? 'Enforced @yarnna* handle reservation' : 'Lifted @yarnna* handle reservation limit'),
+    req.ip || '127.0.0.1'
+  );
+
+  res.json({ success: true, settings: db.data.system_settings });
+});
+
 export default router;

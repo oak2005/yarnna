@@ -12,11 +12,13 @@ interface Props {
 }
 
 export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'moderation' | 'users' | 'audit'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'moderation' | 'users' | 'handles' | 'audit'>('dashboard');
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [adminUsers, setAdminUsers] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [handleRestricted, setHandleRestricted] = useState(true);
+  const [togglingHandle, setTogglingHandle] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchUser, setSearchUser] = useState('');
 
@@ -36,16 +38,20 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [m, r, u, a] = await Promise.all([
+      const [m, r, u, a, s] = await Promise.all([
         api.getAdminMetrics(),
         api.getAdminReports(),
         api.getAdminUsers(searchUser),
         api.getAdminAuditLogs(),
+        api.getAdminSettings().catch(() => ({ settings: { restrict_yarnna_handles: true } })),
       ]);
       setMetrics(m);
       setReports(r.reports || []);
       setAdminUsers(u.users || []);
       setAuditLogs(a.audit_logs || []);
+      if (s?.settings) {
+        setHandleRestricted(s.settings.restrict_yarnna_handles);
+      }
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -93,6 +99,28 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
       fetchAdminData();
     } catch (err: any) {
       alert(err.message || 'Failed to update user status');
+    }
+  };
+
+  const handleToggleHandleBlock = async () => {
+    const nextState = !handleRestricted;
+    const confirmMsg = nextState
+      ? "Enforce handle block: non-admin accounts will be prevented from registering or renaming to '@yarnna*' handles."
+      : "Lift handle block: anyone will be permitted to register or claim '@yarnna*' handles. Are you sure?";
+    if (!window.confirm(confirmMsg)) return;
+
+    setTogglingHandle(true);
+    try {
+      const res = await api.updateAdminSettings({
+        restrict_yarnna_handles: nextState,
+        reason: nextState ? 'Admin re-enforced @yarnna* handle reservation' : 'Admin lifted @yarnna* handle reservation limit',
+      });
+      setHandleRestricted(res.settings.restrict_yarnna_handles);
+      fetchAdminData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update handle restriction.');
+    } finally {
+      setTogglingHandle(false);
     }
   };
 
@@ -170,8 +198,8 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '20px' }}>
-        {(['dashboard', 'moderation', 'users', 'audit'] as const).map((tab) => (
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '20px', overflowX: 'auto' }}>
+        {(['dashboard', 'moderation', 'users', 'handles', 'audit'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -179,6 +207,7 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
               padding: '10px 18px',
               fontWeight: '700',
               fontSize: '0.92rem',
+              whiteSpace: 'nowrap',
               textTransform: 'capitalize',
               color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
               borderBottom: activeTab === tab ? '3px solid var(--primary)' : '3px solid transparent',
@@ -187,6 +216,7 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
             {tab === 'dashboard' && 'Metrics & Quotas'}
             {tab === 'moderation' && `Moderation Queue (${reports.filter(r => r.status === 'pending').length})`}
             {tab === 'users' && 'Account Oversight'}
+            {tab === 'handles' && 'Brand Handles (@yarnna*)'}
             {tab === 'audit' && 'Immutable Audit Logs'}
           </button>
         ))}
@@ -461,6 +491,118 @@ export const AdminPortalView: React.FC<Props> = ({ currentUser, onExit }) => {
                           Modify Status
                         </button>
                       )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : activeTab === 'handles' ? (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Brand & Official Handle Security</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '4px' }}>
+                Control registration and renaming limits for official handles starting with @yarnna* and @customerservice.
+              </p>
+            </div>
+            <button
+              onClick={handleToggleHandleBlock}
+              disabled={togglingHandle}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: handleRestricted ? '#FEF3C7' : 'var(--primary)',
+                color: handleRestricted ? '#B45309' : 'white',
+                border: handleRestricted ? '1px solid #FCD34D' : 'none',
+                fontWeight: '700',
+                fontSize: '0.88rem',
+              }}
+            >
+              <Shield size={16} />
+              {togglingHandle
+                ? 'Updating...'
+                : handleRestricted
+                  ? 'Lift Handle Block'
+                  : 'Enforce Handle Block'}
+            </button>
+          </div>
+
+          {/* Status Banner */}
+          <div style={{
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: handleRestricted ? 'rgba(5, 96, 58, 0.08)' : 'rgba(217, 119, 6, 0.08)',
+            border: `1px solid ${handleRestricted ? 'var(--primary)' : '#FCD34D'}`,
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span style={{
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
+                  backgroundColor: handleRestricted ? 'var(--primary)' : '#D97706',
+                  color: 'white',
+                  textTransform: 'uppercase',
+                }}>
+                  {handleRestricted ? 'Enforced & Protected' : 'Block Lifted (Open Registration)'}
+                </span>
+                <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>
+                  {handleRestricted ? 'Official @yarnna* Namespace Is Secured' : 'Official @yarnna* Namespace Is Currently Unrestricted'}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                {handleRestricted
+                  ? "Non-admin accounts are blocked from registering or renaming to any handle starting with 'yarnna' or customer service. Once you secure all official accounts, you can lift this restriction."
+                  : "Anyone can currently register or claim handles starting with 'yarnna'. Click 'Enforce Handle Block' above to re-lock the namespace."}
+              </p>
+            </div>
+          </div>
+
+          {/* Official Reserved Handles Table */}
+          <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '12px' }}>
+            Official Secured System Accounts
+          </h3>
+          <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.86rem' }}>
+              <thead>
+                <tr style={{ backgroundColor: 'var(--bg-main)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                  <th style={{ padding: '12px 16px' }}>Handle</th>
+                  <th style={{ padding: '12px 16px' }}>Account Name</th>
+                  <th style={{ padding: '12px 16px' }}>Purpose</th>
+                  <th style={{ padding: '12px 16px' }}>Role</th>
+                  <th style={{ padding: '12px 16px' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { handle: '@yarnna', name: 'Yarnna Official', purpose: 'Official community square and platform news', role: 'Super Admin', status: 'Secured' },
+                  { handle: '@yarnnaupdate', name: 'Yarnna Updates', purpose: 'Product changelogs and release announcements', role: 'Admin', status: 'Secured' },
+                  { handle: '@yarnnasafety', name: 'Yarnna Safety', purpose: 'Community trust, privacy and safety desk', role: 'Moderator', status: 'Secured' },
+                  { handle: '@customerservice', name: 'Customer Service', purpose: 'User care and account support desk', role: 'Moderator', status: 'Secured' },
+                ].map((acc) => (
+                  <tr key={acc.handle} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <td style={{ padding: '12px 16px', fontWeight: '800', color: 'var(--primary)' }}>{acc.handle}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '700' }}>{acc.name}</td>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{acc.purpose}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--bg-input)', fontSize: '0.78rem', fontWeight: '700' }}>
+                        {acc.role}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ color: '#059669', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle size={14} /> {acc.status}
+                      </span>
                     </td>
                   </tr>
                 ))}

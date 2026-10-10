@@ -152,6 +152,10 @@ export interface Appeal {
   resolved_at: string | null;
 }
 
+export interface SystemSettings {
+  restrict_yarnna_handles: boolean;
+}
+
 export interface DatabaseState {
   users: User[];
   posts: Post[];
@@ -168,6 +172,7 @@ export interface DatabaseState {
   admin_audit_logs: AdminAuditLog[];
   appeals: Appeal[];
   translation_cache: Record<string, string>;
+  system_settings: SystemSettings;
 }
 
 const isVercel = !!process.env.VERCEL;
@@ -191,6 +196,9 @@ class DatabaseEngine {
     admin_audit_logs: [],
     appeals: [],
     translation_cache: {},
+    system_settings: {
+      restrict_yarnna_handles: true,
+    },
   };
 
   constructor() {
@@ -223,6 +231,10 @@ class DatabaseEngine {
       try {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         this.data = JSON.parse(raw);
+        if (!this.data.system_settings) {
+          this.data.system_settings = { restrict_yarnna_handles: true };
+        }
+        this.ensureOfficialAccounts();
         console.log('[DB] Loaded existing database with', this.data.users.length, 'users');
         return;
       } catch (err) {
@@ -232,6 +244,75 @@ class DatabaseEngine {
 
     this.seedInitialData();
     this.save();
+  }
+
+  private ensureOfficialAccounts() {
+    const now = new Date().toISOString();
+    const hash = (pwd: string) => bcrypt.hashSync(pwd, 10);
+
+    const officialList: Array<{ username: string; email: string; pass: string; name: string; role: 'super_admin' | 'admin' | 'moderator'; bio: string }> = [
+      {
+        username: 'yarnna',
+        email: 'official@yarnna.ng',
+        pass: 'YarnnaOfficial2026!',
+        name: 'Yarnna Official',
+        role: 'super_admin',
+        bio: 'Official home and community square of Yarnna social network.',
+      },
+      {
+        username: 'yarnnaupdate',
+        email: 'updates@yarnna.ng',
+        pass: 'YarnnaUpdate2026!',
+        name: 'Yarnna Updates',
+        role: 'admin',
+        bio: 'Official product news, testnet changelogs, and community announcements.',
+      },
+      {
+        username: 'yarnnasafety',
+        email: 'safety@yarnna.ng',
+        pass: 'YarnnaSafety2026!',
+        name: 'Yarnna Safety',
+        role: 'moderator',
+        bio: 'Official trust, privacy, and community safety enforcement desk.',
+      },
+      {
+        username: 'customerservice',
+        email: 'support@yarnna.ng',
+        pass: 'CustomerService2026!',
+        name: 'Customer Service',
+        role: 'moderator',
+        bio: 'Official user support, account inquiries, and testnet help desk.',
+      },
+    ];
+
+    let added = false;
+    for (const item of officialList) {
+      if (!this.data.users.some(u => u.username.toLowerCase() === item.username)) {
+        this.data.users.unshift({
+          id: `usr_${item.username}`,
+          username: item.username,
+          email: item.email,
+          password_hash: hash(item.pass),
+          display_name: item.name,
+          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${item.username}`,
+          bio: item.bio,
+          location: 'Nigeria',
+          role: item.role,
+          status: 'active',
+          posting_restricted_until: null,
+          messaging_restricted_until: null,
+          acknowledged_testnet_notice_at: now,
+          preferred_language: 'en',
+          created_at: now,
+          updated_at: now,
+        });
+        added = true;
+      }
+    }
+
+    if (added) {
+      this.save();
+    }
   }
 
   public save() {

@@ -1,6 +1,78 @@
 {
   "users": [
     {
+      "id": "usr_customerservice",
+      "username": "customerservice",
+      "email": "support@yarnna.ng",
+      "password_hash": "$2b$10$5J5nZuR7w.z.Ah7lCC5Tmem2TMe45E6RikP/LVxYjd.Pp1bFi7Uua",
+      "display_name": "Customer Service",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=customerservice",
+      "bio": "Official user support, account inquiries, and testnet help desk.",
+      "location": "Nigeria",
+      "role": "moderator",
+      "status": "active",
+      "posting_restricted_until": null,
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": "2026-10-10T16:49:03.315Z",
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:03.315Z",
+      "updated_at": "2026-10-10T16:49:03.315Z"
+    },
+    {
+      "id": "usr_yarnnasafety",
+      "username": "yarnnasafety",
+      "email": "safety@yarnna.ng",
+      "password_hash": "$2b$10$1IoWvsjQK26qjBg.rLJRpOPsB/77VyCAKa98rGhRhjS4E3mkh4XCi",
+      "display_name": "Yarnna Safety",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=yarnnasafety",
+      "bio": "Official trust, privacy, and community safety enforcement desk.",
+      "location": "Nigeria",
+      "role": "moderator",
+      "status": "active",
+      "posting_restricted_until": null,
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": "2026-10-10T16:49:03.315Z",
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:03.315Z",
+      "updated_at": "2026-10-10T16:49:03.315Z"
+    },
+    {
+      "id": "usr_yarnnaupdate",
+      "username": "yarnnaupdate",
+      "email": "updates@yarnna.ng",
+      "password_hash": "$2b$10$OmCVz0DvgWGBi4hQlbxLDOjOiePWMUcmcYagFMiJmJz2NXvt31dF6",
+      "display_name": "Yarnna Updates",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=yarnnaupdate",
+      "bio": "Official product news, testnet changelogs, and community announcements.",
+      "location": "Nigeria",
+      "role": "admin",
+      "status": "active",
+      "posting_restricted_until": null,
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": "2026-10-10T16:49:03.315Z",
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:03.315Z",
+      "updated_at": "2026-10-10T16:49:03.315Z"
+    },
+    {
+      "id": "usr_yarnna",
+      "username": "yarnna",
+      "email": "official@yarnna.ng",
+      "password_hash": "$2b$10$jaSng/GY0J4YsgiysE8f9uhUB.E9LMD7PI.eMzmTdMplIh9WEHmM.",
+      "display_name": "Yarnna Official",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=yarnna",
+      "bio": "Official home and community square of Yarnna social network.",
+      "location": "Nigeria",
+      "role": "super_admin",
+      "status": "active",
+      "posting_restricted_until": null,
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": "2026-10-10T16:49:03.315Z",
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:03.315Z",
+      "updated_at": "2026-10-10T16:49:03.315Z"
+    },
+    {
       "id": "usr_admin",
       "username": "admin",
       "email": "admin@yarnna.ng",
@@ -287,9 +359,77 @@
       "preferred_language": "en",
       "created_at": "2026-10-10T15:35:12.864Z",
       "updated_at": "2026-10-10T15:35:12.864Z"
+    },
+    {
+      "id": "usr_1791650944503_a92qx",
+      "username": "edited_handle_5545",
+      "email": "test_user_1791650944324@testnet.yarnna.ng",
+      "password_hash": "$2b$10$kRgRcpDX7qmIh8M4dBwz2uADuSI2zarttucWe1NSnPJ0X/wPQ9Z4u",
+      "display_name": "Testnet Tester",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=test_user_1791650944324",
+      "bio": "Updated Nigerian tech enthusiast bio",
+      "location": "Nigeria",
+      "role": "user",
+      "status": "active",
+      "posting_restricted_until": "2026-10-11T16:49:06.015Z",
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": "2026-10-10T16:49:05.130Z",
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:04.503Z",
+      "updated_at": "2026-10-10T16:49:05.548Z"
+    },
+    {
+      "id": "usr_1791650944705_h7p9w",
+      "username": "oyetundun_1791650944697",
+      "email": "oyetundun_1791650944697@example.com",
+      "password_hash": "$2b$10$cGC54mGDcz0KmeJIfGtzZOYiBmaeiog03qF5XsYRGn6CppLbabSvC",
+      "display_name": "Oyetundun Taiwo",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=oyetundun_1791650944697",
+      "bio": "",
+      "location": "Nigeria",
+      "role": "user",
+      "status": "active",
+      "posting_restricted_until": null,
+      "messaging_restricted_until": null,
+      "acknowledged_testnet_notice_at": null,
+      "preferred_language": "en",
+      "created_at": "2026-10-10T16:49:04.705Z",
+      "updated_at": "2026-10-10T16:49:04.705Z"
     }
   ],
   "posts": [
+    {
+      "id": "post_1791650945477_5nmn",
+      "author_id": "usr_chioma",
+      "content": "Replying to the test yarn! Clean and fast.",
+      "reply_to_post_id": "post_1791650945439_2832",
+      "repost_of_post_id": null,
+      "photo_url": null,
+      "photo_caption": null,
+      "likes_count": 0,
+      "reposts_count": 0,
+      "replies_count": 0,
+      "bookmarks_count": 0,
+      "is_deleted": false,
+      "created_at": "2026-10-10T16:49:05.477Z",
+      "updated_at": "2026-10-10T16:49:05.477Z"
+    },
+    {
+      "id": "post_1791650945439_2832",
+      "author_id": "usr_1791650944503_a92qx",
+      "content": "Updated post content after editing.",
+      "reply_to_post_id": null,
+      "repost_of_post_id": null,
+      "photo_url": null,
+      "photo_caption": null,
+      "likes_count": 0,
+      "reposts_count": 0,
+      "replies_count": 1,
+      "bookmarks_count": 1,
+      "is_deleted": false,
+      "created_at": "2026-10-10T16:49:05.439Z",
+      "updated_at": "2026-10-10T16:49:05.502Z"
+    },
     {
       "id": "post_1791646513296_h5ct",
       "author_id": "usr_chioma",
@@ -579,6 +719,11 @@
       "user_id": "usr_1791646512759_5v6mh",
       "post_id": "post_1791646513262_xrli",
       "created_at": "2026-10-10T15:35:13.337Z"
+    },
+    {
+      "user_id": "usr_1791650944503_a92qx",
+      "post_id": "post_1791650945439_2832",
+      "created_at": "2026-10-10T16:49:05.517Z"
     }
   ],
   "follows": [
@@ -626,10 +771,24 @@
       "follower_id": "usr_1791646512759_5v6mh",
       "following_id": "usr_chioma",
       "created_at": "2026-10-10T15:35:13.355Z"
+    },
+    {
+      "follower_id": "usr_1791650944503_a92qx",
+      "following_id": "usr_chioma",
+      "created_at": "2026-10-10T16:49:05.530Z"
     }
   ],
   "blocks": [],
   "conversations": [
+    {
+      "id": "conv_1791650945626_jhyh",
+      "type": "direct",
+      "name": null,
+      "avatar_url": null,
+      "created_by": "usr_1791650944503_a92qx",
+      "created_at": "2026-10-10T16:49:05.626Z",
+      "updated_at": "2026-10-10T16:49:05.656Z"
+    },
     {
       "id": "conv_1791646513425_crnb",
       "type": "direct",
@@ -814,6 +973,22 @@
       "is_muted": false,
       "last_read_message_id": "msg_1791646513457_u1m3",
       "joined_at": "2026-10-10T15:35:13.425Z"
+    },
+    {
+      "conversation_id": "conv_1791650945626_jhyh",
+      "user_id": "usr_1791650944503_a92qx",
+      "role": "member",
+      "is_muted": false,
+      "last_read_message_id": "msg_1791650945656_83gz",
+      "joined_at": "2026-10-10T16:49:05.626Z"
+    },
+    {
+      "conversation_id": "conv_1791650945626_jhyh",
+      "user_id": "usr_chioma",
+      "role": "member",
+      "is_muted": false,
+      "last_read_message_id": "msg_1791650945656_83gz",
+      "joined_at": "2026-10-10T16:49:05.626Z"
     }
   ],
   "messages": [
@@ -1056,9 +1231,69 @@
       "is_deleted_for_all": false,
       "created_at": "2026-10-10T15:35:13.457Z",
       "updated_at": "2026-10-10T15:35:13.457Z"
+    },
+    {
+      "id": "msg_1791650945642_byys",
+      "conversation_id": "conv_1791650945626_jhyh",
+      "sender_id": "usr_1791650944503_a92qx",
+      "message_type": "text",
+      "content": "Hello Chioma, testing WhatsApp-style direct chat on Yarnna!",
+      "media_url": null,
+      "voice_duration_seconds": null,
+      "reply_to_message_id": null,
+      "is_forwarded": false,
+      "is_edited": false,
+      "is_deleted_for_all": false,
+      "created_at": "2026-10-10T16:49:05.642Z",
+      "updated_at": "2026-10-10T16:49:05.642Z"
+    },
+    {
+      "id": "msg_1791650945656_83gz",
+      "conversation_id": "conv_1791650945626_jhyh",
+      "sender_id": "usr_1791650944503_a92qx",
+      "message_type": "voice_note",
+      "content": "Voice note (18s)",
+      "media_url": "https://cdn.freesound.org/previews/560/560446_11861866-lq.mp3",
+      "voice_duration_seconds": 18,
+      "reply_to_message_id": null,
+      "is_forwarded": false,
+      "is_edited": false,
+      "is_deleted_for_all": false,
+      "created_at": "2026-10-10T16:49:05.656Z",
+      "updated_at": "2026-10-10T16:49:05.656Z"
     }
   ],
   "notifications": [
+    {
+      "id": "notif_1791650945530",
+      "recipient_id": "usr_chioma",
+      "actor_id": "usr_1791650944503_a92qx",
+      "type": "follow",
+      "target_id": "usr_1791650944503_a92qx",
+      "content_summary": "started following your yarn",
+      "is_read": false,
+      "created_at": "2026-10-10T16:49:05.530Z"
+    },
+    {
+      "id": "notif_1791650945477",
+      "recipient_id": "usr_1791650944503_a92qx",
+      "actor_id": "usr_chioma",
+      "type": "reply",
+      "target_id": "post_1791650945477_5nmn",
+      "content_summary": "replied to your yarn",
+      "is_read": false,
+      "created_at": "2026-10-10T16:49:05.477Z"
+    },
+    {
+      "id": "notif_1791650945454",
+      "recipient_id": "usr_1791650944503_a92qx",
+      "actor_id": "usr_chioma",
+      "type": "like",
+      "target_id": "post_1791650945439_2832",
+      "content_summary": "liked your yarn",
+      "is_read": false,
+      "created_at": "2026-10-10T16:49:05.454Z"
+    },
     {
       "id": "notif_1791646513355",
       "recipient_id": "usr_chioma",
@@ -1295,9 +1530,55 @@
       "resolution_notes": null,
       "created_at": "2026-10-10T15:35:13.790Z",
       "resolved_at": null
+    },
+    {
+      "id": "rep_1791650946103_3yc5",
+      "reporter_id": "usr_chioma",
+      "target_type": "post",
+      "target_id": "post_1791650945439_2832",
+      "category": "spam",
+      "reason": "Automated test report submission.",
+      "status": "pending",
+      "assigned_to": null,
+      "resolution_notes": null,
+      "created_at": "2026-10-10T16:49:06.103Z",
+      "resolved_at": null
     }
   ],
   "admin_audit_logs": [
+    {
+      "id": "aud_1791650946048_u9hk",
+      "admin_id": "usr_admin",
+      "action": "UPDATE_SYSTEM_SETTINGS",
+      "resource_type": "system_settings",
+      "resource_id": "restrict_yarnna_handles",
+      "reason": "Testing admin toggle to re-enforce handle restriction",
+      "ip_address": "127.0.0.1",
+      "outcome": "success",
+      "created_at": "2026-10-10T16:49:06.048Z"
+    },
+    {
+      "id": "aud_1791650946031_2d93",
+      "admin_id": "usr_admin",
+      "action": "UPDATE_SYSTEM_SETTINGS",
+      "resource_type": "system_settings",
+      "resource_id": "restrict_yarnna_handles",
+      "reason": "Testing admin toggle to lift handle restriction",
+      "ip_address": "127.0.0.1",
+      "outcome": "success",
+      "created_at": "2026-10-10T16:49:06.031Z"
+    },
+    {
+      "id": "aud_1791650946015_5xl6",
+      "admin_id": "usr_admin",
+      "action": "USER_RESTRICTED_POSTING",
+      "resource_type": "user",
+      "resource_id": "usr_1791650944503_a92qx",
+      "reason": "Automated test suite policy verification.",
+      "ip_address": "127.0.0.1",
+      "outcome": "success",
+      "created_at": "2026-10-10T16:49:06.015Z"
+    },
     {
       "id": "aud_1791646513755_qq42",
       "admin_id": "usr_admin",
@@ -1409,6 +1690,17 @@
       "resolution_notes": null,
       "created_at": "2026-10-10T15:35:13.806Z",
       "resolved_at": null
+    },
+    {
+      "id": "app_1791650946107",
+      "user_id": "usr_1791650944503_a92qx",
+      "action_id": "general",
+      "appeal_reason": "I am testing the platform in good faith.",
+      "status": "pending",
+      "reviewed_by": null,
+      "resolution_notes": null,
+      "created_at": "2026-10-10T16:49:06.107Z",
+      "resolved_at": null
     }
   ],
   "translation_cache": {
@@ -1416,5 +1708,8 @@
     "00b124db3e0cef9183e93755b060abafe3dea8a30969c587a00b5699849847a0": "Good afternoon everyone",
     "d84169a61371b68a023890217ae9370e4b1e31d5bfa9287b85bb8646881d2386": "[Translation to EN]: Updated post content after editing.",
     "6a1da4261fe08693d82b231ea110c187ad0ab6f060e1377a0b8d5efd26def8ba": "Good afternoon everyone! A quick reminder that authenticity in our communities matters more than vanity metrics. Let us yarn with respect."
+  },
+  "system_settings": {
+    "restrict_yarnna_handles": true
   }
 }

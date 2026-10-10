@@ -20,6 +20,15 @@ router.post('/register', rateLimit(10, 60000), (req: Request, res: Response) => 
     return;
   }
 
+  // Brand impersonation guard: protect @yarnna* and @customerservice
+  const isRestricted = db.data.system_settings?.restrict_yarnna_handles ?? true;
+  if (isRestricted) {
+    if (cleanUsername.startsWith('yarnna') || cleanUsername === 'customerservice' || cleanUsername === 'customer_service') {
+      res.status(400).json({ error: "Usernames starting with 'yarnna' and official customer service handles are currently reserved for verified system accounts." });
+      return;
+    }
+  }
+
   if (password.length < 8) {
     res.status(400).json({ error: 'Password must be at least 8 characters long.' });
     return;

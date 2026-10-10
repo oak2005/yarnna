@@ -66,21 +66,6 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onAuthSuccess }) =
     }
   };
 
-  // Quick switch test accounts
-  const quickLogin = async (username: string, pass: string) => {
-    setErrorMsg(null);
-    setLoading(true);
-    try {
-      const res = await api.login({ identifier: username, password: pass });
-      setAuthToken(res.token);
-      onAuthSuccess(res.user);
-      onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Quick login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="modal-overlay" style={{ zIndex: 110 }}>
@@ -186,50 +171,6 @@ export const AuthModal: React.FC<Props> = ({ isOpen, onClose, onAuthSuccess }) =
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
-            </div>
-
-            {/* Quick Testnet Demo Accounts */}
-            <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                Quick Testnet Switcher (1-Click Login)
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('tunde_tech', 'TestnetPass2026!')}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-input)', fontWeight: '600' }}
-                >
-                  @tunde_tech (Lagos)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('chioma_dev', 'TestnetPass2026!')}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-input)', fontWeight: '600' }}
-                >
-                  @chioma_dev (Enugu)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('amina_k', 'TestnetPass2026!')}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-input)', fontWeight: '600' }}
-                >
-                  @amina_k (Kano)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('yarnna_safety', 'YarnnaSafety2026!')}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-full)', backgroundColor: '#FEF3C7', color: '#B45309', fontWeight: '700' }}
-                >
-                  @yarnna_safety (Moderator)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickLogin('admin', 'YarnnaSuperAdmin2026!')}
-                  style={{ padding: '5px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-full)', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: '700' }}
-                >
-                  @admin (Super Admin)
-                </button>
-              </div>
             </div>
           </form>
         ) : (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   MapPin, Calendar, Edit3, UserPlus, UserCheck, Shield,
-  ArrowLeft, Ban, Check
+  ArrowLeft, Ban, Check, LogOut
 } from 'lucide-react';
 import { User, Post } from '../types';
 import { api } from '../api';
@@ -13,6 +13,8 @@ interface Props {
   onBack?: () => void;
   onOpenReportModal: (targetType: string, targetId: string) => void;
   onProfileUpdated: (updatedUser?: User) => void;
+  onLogout?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const ProfileView: React.FC<Props> = ({
@@ -21,6 +23,8 @@ export const ProfileView: React.FC<Props> = ({
   onBack,
   onOpenReportModal,
   onProfileUpdated,
+  onLogout,
+  onOpenAdmin,
 }) => {
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -169,33 +173,76 @@ export const ProfileView: React.FC<Props> = ({
             }}
           />
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {isSelf ? (
-              <button
-                onClick={() => {
-                  if (profileUser) {
-                    setEditUsername(profileUser.username);
-                    setEditDisplayName(profileUser.display_name);
-                    setEditBio(profileUser.bio || '');
-                    setEditLocation(profileUser.location || '');
-                    setEditLang(profileUser.preferred_language || 'en');
-                    setEditError(null);
-                  }
-                  setShowEditModal(true);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 18px',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border-strong)',
-                  fontWeight: '700',
-                  fontSize: '0.88rem',
-                }}
-              >
-                <Edit3 size={15} /> Edit Profile
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    if (profileUser) {
+                      setEditUsername(profileUser.username);
+                      setEditDisplayName(profileUser.display_name);
+                      setEditBio(profileUser.bio || '');
+                      setEditLocation(profileUser.location || '');
+                      setEditLang(profileUser.preferred_language || 'en');
+                      setEditError(null);
+                    }
+                    setShowEditModal(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 18px',
+                    borderRadius: 'var(--radius-full)',
+                    border: '1px solid var(--border-strong)',
+                    fontWeight: '700',
+                    fontSize: '0.88rem',
+                  }}
+                >
+                  <Edit3 size={15} /> Edit Profile
+                </button>
+
+                {onOpenAdmin && (currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') && (
+                  <button
+                    onClick={onOpenAdmin}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: '#FEF3C7',
+                      color: '#B45309',
+                      border: '1px solid #FCD34D',
+                      fontWeight: '700',
+                      fontSize: '0.88rem',
+                    }}
+                  >
+                    <Shield size={15} /> Admin Portal
+                  </button>
+                )}
+
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    title="Sign Out"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'transparent',
+                      color: 'var(--accent-red)',
+                      border: '1px solid var(--border-subtle)',
+                      fontWeight: '700',
+                      fontSize: '0.88rem',
+                    }}
+                  >
+                    <LogOut size={15} /> Sign Out
+                  </button>
+                )}
+              </>
             ) : (
               <>
                 <button

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Home, Compass, PlusCircle, MessageSquare, User as UserIcon,
-  Shield, LogOut, Moon, Sun, Monitor, Check, Info, Bell, RefreshCw, Sparkles, Clock
+  Shield, LogOut, LogIn, Moon, Sun, Monitor, Check, Info, Bell, RefreshCw, Sparkles, Clock
 } from 'lucide-react';
 import { User, Post } from './types';
 import { api, getAuthToken, removeAuthToken } from './api';
@@ -264,7 +264,30 @@ export const App: React.FC = () => {
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Admin Portal Shortcut if privileged */}
+            {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                title="Open Admin & Safety Portal"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: activeTab === 'admin' ? 'var(--primary)' : 'rgba(217, 119, 6, 0.12)',
+                  color: activeTab === 'admin' ? 'white' : '#D97706',
+                  border: '1px solid #FCD34D',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                }}
+              >
+                <Shield size={14} />
+                <span>Admin</span>
+              </button>
+            )}
+
             {/* Testnet notice trigger button */}
             <button
               onClick={() => setShowTestnetModal(true)}
@@ -282,7 +305,7 @@ export const App: React.FC = () => {
               }}
             >
               <Info size={14} />
-              <span>Testnet Notice</span>
+              <span>Testnet</span>
             </button>
 
             {/* Theme Mode Selector (Light, Dark, System / Device Default) */}
@@ -389,6 +412,49 @@ export const App: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Sign Out / Sign In Button */}
+            {currentUser ? (
+              <button
+                onClick={handleLogout}
+                title="Sign out of your account"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--bg-input)',
+                  color: 'var(--accent-red)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                }}
+              >
+                <LogOut size={14} />
+                <span>Sign Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                title="Sign In or Create Account"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                }}
+              >
+                <LogIn size={14} />
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -506,6 +572,8 @@ export const App: React.FC = () => {
                 });
               }
             }}
+            onLogout={handleLogout}
+            onOpenAdmin={() => setActiveTab('admin')}
           />
         )}
 
@@ -608,6 +676,17 @@ export const App: React.FC = () => {
           <UserIcon size={22} />
           <span>Profile</span>
         </button>
+
+        {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'moderator') && (
+          <button
+            onClick={() => { setActiveTab('admin'); setViewingUsername(null); }}
+            className={`mobile-nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
+            style={{ color: '#D97706' }}
+          >
+            <Shield size={22} />
+            <span>Admin</span>
+          </button>
+        )}
       </nav>
 
       {/* Modals */}

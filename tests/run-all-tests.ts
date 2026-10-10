@@ -312,6 +312,32 @@ async function runTestSuite() {
     assert(res.status === 400, `Expected 400 for invalid username characters, got ${res.status}`);
   });
 
+  await test('Functional: Profile', 'Reject non-admin from renaming to @yarnna* or @customerservice', async () => {
+    const res = await request('/users/profile', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${testUserToken}` },
+      body: JSON.stringify({
+        username: 'yarnna_vip',
+      }),
+    });
+    assert(res.status === 400, `Expected 400 for reserved yarnna handle, got ${res.status}`);
+    assert(res.data.error.includes('reserved'), 'Expected reserved handle error message');
+  });
+
+  await test('Functional: Auth', 'Reject registration with @yarnna* or @customerservice', async () => {
+    const res = await request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: 'yarnna_support',
+        display_name: 'Fake Yarnna Support',
+        email: `fake_${Date.now()}@test.com`,
+        password: 'ValidPassword2026!',
+      }),
+    });
+    assert(res.status === 400, `Expected 400 for reserved handle, got ${res.status}`);
+    assert(res.data.error.includes('reserved'), 'Expected reserved handle error message');
+  });
+
   // 2. CHAT & MESSAGING TESTS
   console.log('\n--- 2. CHAT & MESSAGING TESTING ---');
 
@@ -517,6 +543,41 @@ async function runTestSuite() {
     const latest = auditRes.data.audit_logs[0];
     assert(latest.action === 'USER_RESTRICTED_POSTING', 'Action logged correctly');
     assert(latest.reason.includes('Automated test suite'), 'Reason captured');
+  });
+
+  await test('Security: Brand Reservation', 'Admin can toggle handle reservation on and off', async () => {
+    // 1. Lift restriction
+    const liftRes = await request('/admin/settings', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        restrict_yarnna_handles: false,
+        reason: 'Testing admin toggle to lift handle restriction',
+      }),
+    });
+    assert(liftRes.status === 200, `Expected 200, got ${liftRes.status}`);
+    assert(liftRes.data.settings.restrict_yarnna_handles === false, 'Restriction lifted');
+
+    // 2. Re-enforce restriction
+    const enforceRes = await request('/admin/settings', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        restrict_yarnna_handles: true,
+        reason: 'Testing admin toggle to re-enforce handle restriction',
+      }),
+    });
+    assert(enforceRes.status === 200, `Expected 200, got ${enforceRes.status}`);
+    assert(enforceRes.data.settings.restrict_yarnna_handles === true, 'Restriction re-enforced');
+  });
+
+  await test('Functional: Accounts', 'Verify official system accounts exist', async () => {
+    const officialHandles = ['yarnna', 'yarnnaupdate', 'yarnnasafety', 'customerservice'];
+    for (const h of officialHandles) {
+      const res = await request(`/users/profile/${h}`);
+      assert(res.status === 200, `Expected profile for @${h} to exist, got ${res.status}`);
+      assert(res.data.user.username === h, `Username match for @${h}`);
+    }
   });
 
   // 5. COMMUNITY REPORTING & SAFETY

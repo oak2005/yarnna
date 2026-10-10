@@ -105,6 +105,9 @@ export const api = {
   updateUserStatus: (id: string, status: string, reason: string, restriction_hours?: number) =>
     request<any>(`/admin/users/${id}/status`, { method: 'POST', body: JSON.stringify({ status, reason, restriction_hours }) }),
   getAdminAuditLogs: () => request<any>('/admin/audit-logs'),
+  getAdminSettings: () => request<any>('/admin/settings'),
+  updateAdminSettings: (payload: { restrict_yarnna_handles: boolean; reason?: string }) =>
+    request<any>('/admin/settings', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Upload helper
   uploadPhoto: async (file: File): Promise<string> => {

@@ -94,6 +94,16 @@ router.put('/profile', requireAuth, (req: AuthRequest, res: Response) => {
     }
 
     if (cleanUsername !== user.username) {
+      // Brand impersonation guard: protect @yarnna* and @customerservice for non-admins
+      const isRestricted = db.data.system_settings?.restrict_yarnna_handles ?? true;
+      const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+      if (isRestricted && !isAdmin) {
+        if (cleanUsername.startsWith('yarnna') || cleanUsername === 'customerservice' || cleanUsername === 'customer_service') {
+          res.status(400).json({ error: "Usernames starting with 'yarnna' and official customer service handles are currently reserved for verified system accounts." });
+          return;
+        }
+      }
+
       const isTaken = db.data.users.some(u => u.id !== user.id && u.username.toLowerCase() === cleanUsername);
       if (isTaken) {
         res.status(409).json({ error: `Username @${cleanUsername} is already taken by another account.` });
