@@ -1,0 +1,49 @@
+{
+  "name": "yarn-na",
+  "version": "1.0.0",
+  "description": "Nigeria-First Social Network, Testnet Phase, Privacy-First and Zero-Budget",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "dev:all": "tsx server/index.ts",
+    "build": "vite build",
+    "test": "tsx tests/run-all-tests.ts",
+    "start": "tsx server/index.ts"
+  },
+  "keywords": [
+    "social-network",
+    "nigeria",
+    "privacy-first",
+    "testnet"
+  ],
+  "author": "Yarnna Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.55.0",
+    "multer": "^2.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "uuid": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/uuid": "^10.0.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "playwright": "^1.64.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

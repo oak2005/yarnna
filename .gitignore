@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build and Production Artifacts
+dist/
+dist-ssr/
+*.local
+
+# Environment Variables and Secrets
+.env
+.env.*.local
+.env.production
+.env.staging
+
+# Logs and Temporaries
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+*.tmp
+
+# Runtime Data and Uploads (Testnet media)
+uploads/*
+!uploads/.gitkeep
+
+# Vercel and Framework Directories
+.vercel/
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Test and Coverage Outputs
+coverage/
+playwright-report/
+test-results/
